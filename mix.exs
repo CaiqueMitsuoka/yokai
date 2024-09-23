@@ -13,7 +13,7 @@ defmodule CheckRunner.MixProject do
 
   def cli do
     [
-      preferred_envs: [{:watcher, :test}]
+      preferred_envs: [{:check_runner, :test}]
     ]
   end
 
