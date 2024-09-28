@@ -1,8 +1,8 @@
-defmodule CheckRunnerTest do
+defmodule YokaiTest do
   use ExUnit.Case
-  doctest CheckRunner
+  doctest Yokai
 
   test "greets the world" do
-    assert CheckRunner.hello() == :world
+    assert Yokai.hello() == :world
   end
 end

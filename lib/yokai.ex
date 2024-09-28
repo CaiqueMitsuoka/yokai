@@ -1,6 +1,6 @@
-defmodule CheckRunner do
+defmodule Yokai do
   @moduledoc """
-  Documentation for `CheckRunner`.
+  Documentation for `Yokai`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule CheckRunner do
 
   ## Examples
 
-      iex> CheckRunner.hello()
+      iex> Yokai.hello()
       :world
 
   """

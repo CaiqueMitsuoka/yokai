@@ -1,9 +1,9 @@
-defmodule CheckRunner.MixProject do
+defmodule Yokai.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :check_runner,
+      app: :yokai,
       version: "0.1.0",
       elixir: "~> 1.17-rc",
       start_permanent: Mix.env() == :prod,
@@ -13,7 +13,7 @@ defmodule CheckRunner.MixProject do
 
   def cli do
     [
-      preferred_envs: [{:check_runner, :test}]
+      preferred_envs: [{:watch, :test}]
     ]
   end
 
