@@ -5,22 +5,18 @@ defmodule Mix.Tasks.Watch do
   @shortdoc "Watches for file changes and runs tests"
 
   @impl Mix.Task
-  def run(args) do
-    {opts, _, _} =
-      OptionParser.parse(args,
-        switches: [
-          directories: :string,
-          test_files: :string
-        ],
-        aliases: [d: :directories, t: :test_files, f: :force]
-      )
 
-    directories = Keyword.get(opts, :directories, "lib,test") |> String.split(",")
-    test_files = Keyword.get(opts, :test_files, "test/**/*_test.exs") |> String.split(",")
+  alias Yokai.Options.CLIParser
+
+  def run(args) do
+    IO.inspect(Mix.env(), label: :env)
+    IO.inspect(args, label: :args)
+
+    options = CLIParser.parse(args)
 
     Logger.info("Starting CheckRunner...")
-    Logger.info("Watching directories: #{Enum.join(directories, ", ")}")
-    Logger.info("Test files pattern: #{Enum.join(test_files, ", ")}")
+    Logger.info("Watching directories: #{Enum.join(options.watch_folders, ", ")}")
+    Logger.info("Test files pattern: #{Enum.join(options.test_patterns, ", ")}")
 
     iex_running? = IEx.started?()
     Logger.info("IEx running: #{iex_running?}")
@@ -28,13 +24,13 @@ defmodule Mix.Tasks.Watch do
     load_configs()
 
     Application.ensure_all_started(:file_system)
-    {:ok, pid} = FileSystem.start_link(dirs: directories)
+    {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
 
     ExUnit.start(auto_run: false)
 
-    run_tests(test_files)
-    watch_files(test_files)
+    run_tests(options.test_patterns)
+    watch_files(options.test_patterns)
   end
 
   defp watch_files(test_files) do
