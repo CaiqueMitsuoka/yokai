@@ -113,9 +113,6 @@ defmodule Mix.Tasks.Watch do
     # Start the main application and its dependencies
     {:ok, _} = Application.ensure_all_started(app_name)
 
-    # Explicitly start Mimic
-    {:ok, _} = Application.ensure_all_started(:mimic)
-
     Logger.info("Applications started.")
   end
 

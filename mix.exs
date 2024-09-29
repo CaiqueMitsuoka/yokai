@@ -4,10 +4,22 @@ defmodule Yokai.MixProject do
   def project do
     [
       app: :yokai,
+      description: "A test runner and watcher designed for fast interactive development",
       version: "0.1.0",
-      elixir: "~> 1.17-rc",
+      elixir: "~> 1.17.2",
+      package: package(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
+    ]
+  end
+
+  def package do
+    [
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => "https://github.com/CaiqueMitsuoka/yokai"
+      },
+      source_url: "https://github.com/CaiqueMitsuoka/yokai"
     ]
   end
 
