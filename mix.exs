@@ -9,7 +9,10 @@ defmodule Yokai.MixProject do
       elixir: "~> 1.17.2",
       package: package(),
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: [
+        extras: ["README.md"]
+      ]
     ]
   end
 
@@ -39,6 +42,7 @@ defmodule Yokai.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:file_system, "~> 1.0"}
     ]
   end
