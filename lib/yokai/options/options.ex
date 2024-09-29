@@ -5,5 +5,6 @@ defmodule Yokai.Options do
   """
 
   defstruct test_patterns: [],
-            watch_folders: ["lib", "test"]
+            watch_folders: ["lib", "test"],
+            exit: false
 end
