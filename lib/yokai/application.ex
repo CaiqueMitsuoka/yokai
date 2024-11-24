@@ -5,7 +5,7 @@ defmodule Yokai.Application do
   def start(_type, _args) do
     Logger.info("Starting Yokai app...")
     ensure_started()
-    children = []
+    children = [Yokai.Recompiler]
 
     opts = [strategy: :one_for_one, name: Yokai.Supervisor]
     Supervisor.start_link(children, opts)

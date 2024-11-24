@@ -23,6 +23,7 @@ defmodule Mix.Tasks.Watch do
 
     load_configs()
     Yokai.Application.start(:app, options)
+    Process.sleep(1000)
 
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
@@ -46,57 +47,33 @@ defmodule Mix.Tasks.Watch do
   end
 
   defp run_tests(test_files_pattern) do
-    Logger.info("Recompiling...")
-    recompile()
+    with :ok <- recompile_code(),
+         :ok <- loadpaths(),
+         :ok <- start_applications(),
+         :ok <- GenServer.call(Yokai.Recompiler, {:tests, test_files_pattern}) do
+      Logger.info("Running tests...")
 
-    # Ensure the test environment is loaded
-    Mix.Task.run("loadpaths")
-    for {mod, _file} <- Code.required_files(), do: :code.purge(mod)
-    for {mod, _file} <- Code.required_files(), do: :code.delete(mod)
-
-    # Start all necessary applications
-    start_applications()
-
-    # Reload test_helper.exs
-    reload_test_helper()
-    # Run the tests
-
-    # Find all test files matching the pattern
-    test_files = Path.wildcard(test_files_pattern)
-
-    # Force recompilation of test files
-    Enum.each(test_files, &Code.compile_file/1)
-
-    Enum.each(test_files, fn file ->
-      Logger.info("Loading test file: #{file}")
-      Code.require_file(file)
-    end)
-
-    Logger.info("Running tests...")
-
-    ExUnit.run()
-  end
-
-  defp recompile do
-    try do
-      IEx.Helpers.recompile()
-    rescue
-      e in FunctionClauseError ->
-        Logger.error("Error during recompilation: #{Exception.message(e)}")
-        Logger.info("Falling back to Mix.Task.rerun(\"compile\")")
-        Mix.Task.rerun("compile")
+      ExUnit.run()
+    else
+      _ -> Logger.error("Error running tests.")
     end
   end
 
-  defp reload_test_helper do
-    Logger.info("Reloading test_helper.exs")
-    test_helper_path = "test/test_helper.exs"
+  def recompile_code() do
+    Logger.info("Recompiling...")
 
-    if File.exists?(test_helper_path) do
-      Code.unrequire_files([test_helper_path])
-      Code.require_file(test_helper_path)
-    else
-      Logger.error("test_helper.exs not found")
+    case GenServer.call(Yokai.Recompiler, :code) do
+      :noop -> :ok
+      :ok -> :ok
+      _ -> :error
+    end
+  end
+
+  def loadpaths() do
+    case Mix.Task.run("loadpaths") do
+      :noop -> :ok
+      :ok -> :ok
+      _ -> :error
     end
   end
 
@@ -110,6 +87,7 @@ defmodule Mix.Tasks.Watch do
     {:ok, _} = Application.ensure_all_started(app_name)
 
     Logger.info("Applications started.")
+    :ok
   end
 
   defp load_configs do

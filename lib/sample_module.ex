@@ -20,4 +20,8 @@ defmodule SampleModule do
 
   """
   def sub(a, b), do: a - b
+
+  def hello do
+    IO.puts("Hello, World!")
+  end
 end
