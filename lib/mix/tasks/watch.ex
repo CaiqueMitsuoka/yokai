@@ -22,8 +22,8 @@ defmodule Mix.Tasks.Watch do
     Logger.info("IEx running: #{iex_running?}")
 
     load_configs()
+    Yokai.Application.start(:app, options)
 
-    Application.ensure_all_started(:file_system)
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
 
