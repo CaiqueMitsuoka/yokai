@@ -10,7 +10,7 @@ by adding `yokai` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:yokai, "~> 0.1.0"}
+    {:yokai, "~> 0.2.0"}
   ]
 end
 ```
