@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Watch do
   @impl Mix.Task
 
   alias Yokai.Options.CLIParser
+  alias Yokai.Recompiler
 
   def run(args) do
     IO.inspect(Mix.env(), label: :env)
@@ -46,10 +47,9 @@ defmodule Mix.Tasks.Watch do
   end
 
   defp run_tests(test_files_pattern) do
-    with :ok <- recompile_code(),
-         :ok <- loadpaths(),
+    with :ok <- loadpaths(),
          :ok <- start_applications(),
-         :ok <- GenServer.call(Yokai.Recompiler, {:tests, test_files_pattern}) do
+         :ok <- Recompiler.recompile_all(test_files_pattern) do
       Logger.info("Running tests...")
 
       ExUnit.run()

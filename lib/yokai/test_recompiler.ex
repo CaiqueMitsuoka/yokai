@@ -5,21 +5,20 @@ defmodule Yokai.ExsRecompiler do
     with test_files <- Path.wildcard(test_files_pattern),
          :ok <- purge_test_modules(test_files),
          :ok <- compile_test_files(test_files),
-         :ok <- reload_test_helper(),
-         :ok <- load_test_files(test_files) do
+         :ok <- reload_test_helper() do
       :ok
     else
       _ -> :error
     end
   end
 
-  def purge_test_modules(test_paths) do
+  defp purge_test_modules(test_paths) do
     Enum.each(test_paths, &reload_test_file/1)
 
     :ok
   end
 
-  def reload_test_file(file_path) do
+  defp reload_test_file(file_path) do
     modules_from_file = find_modules_from_file(file_path)
 
     Enum.each(modules_from_file, fn module ->
@@ -49,28 +48,13 @@ defmodule Yokai.ExsRecompiler do
     end
   end
 
-  def compile_test_files(test_files) do
+  defp compile_test_files(test_files) do
     try do
       Enum.each(test_files, &Code.compile_file/1)
       :ok
     rescue
       e in CompileError ->
         Logger.error("Error during test compilation: #{Exception.message(e)}")
-        :error
-    end
-  end
-
-  def load_test_files(test_files) do
-    try do
-      Enum.each(test_files, fn file ->
-        Logger.info("Loading test file: #{file}")
-        Code.require_file(file)
-      end)
-
-      :ok
-    rescue
-      e in CompileError ->
-        Logger.error("Error during test loading: #{Exception.message(e)}")
         :error
     end
   end

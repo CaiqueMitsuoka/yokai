@@ -19,6 +19,11 @@ defmodule Yokai.Recompiler do
     }
   end
 
+  def recompile_all(pattern) do
+    GenServer.call(__MODULE__, :code)
+    GenServer.call(__MODULE__, {:tests, pattern})
+  end
+
   @impl true
   def init(_) do
     {:ok, %{}}
