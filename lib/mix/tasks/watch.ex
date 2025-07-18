@@ -23,7 +23,6 @@ defmodule Mix.Tasks.Watch do
 
     load_configs()
     Yokai.Application.start(:app, options)
-    Process.sleep(1000)
 
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
