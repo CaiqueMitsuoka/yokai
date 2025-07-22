@@ -8,20 +8,22 @@ defmodule Yokai.Recompiler do
 
   alias Yokai.ExsRecompiler
 
-  def start_link do
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  def start_link(opts \\ %{}) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def child_spec(_) do
+  def child_spec(opts) do
     %{
       id: __MODULE__,
-      start: {__MODULE__, :start_link, []}
+      start: {__MODULE__, :start_link, [opts]}
     }
   end
 
-  def recompile_all(pattern) do
-    GenServer.call(__MODULE__, :code)
-    GenServer.call(__MODULE__, {:tests, pattern})
+  def recompile_all(pattern, opts \\ %{}) do
+    timeout = Map.get(opts, :compile_timeout)
+
+    GenServer.call(__MODULE__, :code, timeout)
+    GenServer.call(__MODULE__, {:tests, pattern}, timeout)
   end
 
   @impl true

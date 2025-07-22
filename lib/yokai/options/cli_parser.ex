@@ -6,11 +6,13 @@ defmodule Yokai.Options.CLIParser do
       OptionParser.parse(args,
         strict: [
           watch_folders: :string,
-          test_patterns: :string
+          test_patterns: :string,
+          compile_timeout: :integer
         ],
         aliases: [
           w: :watch_folders,
-          t: :test_patterns
+          t: :test_patterns,
+          c: :compile_timeout
         ]
       )
 
@@ -20,7 +22,12 @@ defmodule Yokai.Options.CLIParser do
       |> Kernel.++(files)
 
     watch_folders = Keyword.get(opts, :watch_folders, "lib,test") |> String.split(",")
+    compile_timeout = Keyword.get(opts, :compile_timeout, 30) * 1000
 
-    %Options{watch_folders: watch_folders, test_patterns: test_patterns}
+    %Options{
+      watch_folders: watch_folders,
+      test_patterns: test_patterns,
+      compile_timeout: compile_timeout
+    }
   end
 end

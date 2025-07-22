@@ -22,25 +22,27 @@ defmodule Mix.Tasks.Watch do
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
 
-    run_tests(options.test_patterns)
-    watch_files(options.test_patterns)
+    Logger.debug("Started with: #{inspect(options)}")
+
+    run_tests(options.test_patterns, options)
+    watch_files(options.test_patterns, options)
   end
 
-  defp watch_files(test_files) do
+  defp watch_files(test_files, opts) do
     receive do
       {:file_event, _watcher_pid, {path, _events}} ->
         Logger.info("File changed: #{path}")
-        run_tests(test_files)
-        watch_files(test_files)
+        run_tests(test_files, opts)
+        watch_files(test_files, opts)
 
       {:file_event, _watcher_pid, :stop} ->
         Logger.info("Watcher stopped.")
     end
   end
 
-  defp run_tests(test_files_pattern) do
+  defp run_tests(test_files_pattern, opts) do
     with :ok <- Initializer.loadpaths(),
-         :ok <- Recompiler.recompile_all(test_files_pattern) do
+         :ok <- Recompiler.recompile_all(test_files_pattern, opts) do
       Logger.info("Running tests...")
 
       ExUnit.run()
