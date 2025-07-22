@@ -6,6 +6,7 @@ defmodule Yokai.ExsRecompiler do
          :ok <- purge_test_modules(test_files),
          :ok <- compile_test_files(test_files),
          :ok <- reload_test_helper() do
+      IO.inspect("test recompile", label: :ok)
       :ok
     else
       _ -> :error
@@ -53,7 +54,7 @@ defmodule Yokai.ExsRecompiler do
       Enum.each(test_files, &Code.compile_file/1)
       :ok
     rescue
-      e in CompileError ->
+      e ->
         Logger.error("Error during test compilation: #{Exception.message(e)}")
         :error
     end
