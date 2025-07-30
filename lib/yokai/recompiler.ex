@@ -19,11 +19,12 @@ defmodule Yokai.Recompiler do
     }
   end
 
-  def recompile_all(pattern, opts \\ %{}) do
+  def recompile_all(opts \\ %{}) do
     timeout = Map.get(opts, :compile_timeout)
+    test_files_paths = Map.get(opts, :test_files_paths)
 
     GenServer.call(__MODULE__, :code, timeout)
-    GenServer.call(__MODULE__, {:tests, pattern}, timeout)
+    GenServer.call(__MODULE__, {:tests, test_files_paths}, timeout)
   end
 
   @impl true
@@ -37,8 +38,8 @@ defmodule Yokai.Recompiler do
   end
 
   @impl true
-  def handle_call({:tests, pattern}, _caller, state) do
-    {:reply, ExsRecompiler.from_pattern(pattern), state}
+  def handle_call({:tests, test_files_paths}, _caller, state) do
+    {:reply, ExsRecompiler.from_pattern(test_files_paths), state}
   end
 
   defp compile_code do

@@ -1,12 +1,10 @@
 defmodule Yokai.ExsRecompiler do
   require Logger
 
-  def from_pattern(test_files_pattern) do
-    with test_files <- Path.wildcard(test_files_pattern),
-         :ok <- purge_test_modules(test_files),
-         :ok <- compile_test_files(test_files),
+  def from_pattern(test_files_paths) do
+    with :ok <- purge_test_modules(test_files_paths),
+         :ok <- compile_test_files(test_files_paths),
          :ok <- reload_test_helper() do
-      IO.inspect("test recompile", label: :ok)
       :ok
     else
       _ -> :error
@@ -28,7 +26,7 @@ defmodule Yokai.ExsRecompiler do
     end)
   end
 
-  defp find_modules_from_file(file_path) do
+  def find_modules_from_file(file_path) do
     absolute_path = Path.expand(file_path)
 
     :code.all_loaded()
@@ -39,11 +37,14 @@ defmodule Yokai.ExsRecompiler do
         _ -> false
       end
     end)
+    |> List.flatten()
   end
 
   defp get_source_file(module) do
     try do
-      module.__info__(:compile)[:source] |> to_string() |> Path.expand()
+      module.__info__(:compile)[:source]
+      |> to_string()
+      |> Path.expand()
     rescue
       _ -> nil
     end
@@ -51,7 +52,8 @@ defmodule Yokai.ExsRecompiler do
 
   defp compile_test_files(test_files) do
     try do
-      Enum.each(test_files, &Code.compile_file/1)
+      Enum.map(test_files, &Code.eval_file/1)
+
       :ok
     rescue
       e ->

@@ -8,14 +8,26 @@ defmodule Yokai.Options.CLIParserTest do
     test "returns the default values when no arguments are passed" do
       assert CLIParser.parse([]) == %Options{
                watch_folders: ["lib", "test"],
-               test_patterns: ["test/**/*_test.exs"]
+               test_patterns: ["test/**/*_test.exs"],
+               test_files_paths: [
+                 "test/options/cli_parser_test.exs",
+                 "test/options/path_resolver_test.exs",
+                 "test/sample_module_test.exs",
+                 "test/yokai_test.exs"
+               ]
              }
     end
 
     test "parses the watch_folders argument" do
       assert CLIParser.parse(["-w", "foo,bar"]) == %Options{
                watch_folders: ["foo", "bar"],
-               test_patterns: ["test/**/*_test.exs"]
+               test_patterns: ["test/**/*_test.exs"],
+               test_files_paths: [
+                 "test/options/cli_parser_test.exs",
+                 "test/options/path_resolver_test.exs",
+                 "test/sample_module_test.exs",
+                 "test/yokai_test.exs"
+               ]
              }
     end
 

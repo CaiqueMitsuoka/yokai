@@ -8,7 +8,6 @@ defmodule Yokai.Initializer do
          {:ok, _} <- start_application(),
          :ok <- ExUnit.start(auto_run: false) do
       Logger.info("Starting Yokai...")
-      |> IO.inspect(label: :exunit_start)
 
       opts
     else

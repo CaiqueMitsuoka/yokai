@@ -5,6 +5,7 @@ defmodule Yokai.Options do
   """
 
   defstruct test_patterns: [],
+            test_files_paths: [],
             watch_folders: ["lib", "test"],
             exit: false,
             compile_timeout: 30_000
