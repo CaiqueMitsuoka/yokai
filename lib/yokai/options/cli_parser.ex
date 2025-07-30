@@ -17,11 +17,7 @@ defmodule Yokai.Options.CLIParser do
         ]
       )
 
-    test_patterns =
-      Keyword.get(opts, :test_patterns, "test/**/*_test.exs")
-      |> String.split(",")
-      |> Kernel.++(files)
-
+    test_patterns = parse_test_patterns(files, opts)
     test_files_paths = PathResolver.resolve(test_patterns)
     watch_folders = Keyword.get(opts, :watch_folders, "lib,test") |> String.split(",")
     compile_timeout = Keyword.get(opts, :compile_timeout, 30) * 1000
@@ -32,5 +28,17 @@ defmodule Yokai.Options.CLIParser do
       test_files_paths: test_files_paths,
       compile_timeout: compile_timeout
     }
+  end
+
+  defp parse_test_patterns(files, opts) do
+    case Keyword.get(opts, :test_patterns, []) do
+      patterns when is_binary(patterns) -> String.split(patterns, ",")
+      patterns -> patterns
+    end
+    |> Kernel.++(files)
+    |> case do
+      [] -> ["test/**/*_test.exs"]
+      test_patterns -> test_patterns
+    end
   end
 end

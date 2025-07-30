@@ -44,5 +44,45 @@ defmodule Yokai.Options.CLIParserTest do
                test_patterns: ["test/application_test.ex"]
              }
     end
+
+    test "uses default test pattern only when no patterns or files provided" do
+      result = CLIParser.parse([])
+      assert result.test_patterns == ["test/**/*_test.exs"]
+    end
+
+    test "does not use default when test_patterns option is provided" do
+      result = CLIParser.parse(["-t", "test/specific_test.exs"])
+      assert result.test_patterns == ["test/specific_test.exs"]
+    end
+
+    test "does not use default when file arguments are provided" do
+      result = CLIParser.parse(["test/sample_module_test.exs"])
+      assert result.test_patterns == ["test/sample_module_test.exs"]
+    end
+
+    test "combines test_patterns option with file arguments" do
+      result = CLIParser.parse(["-t", "test/pattern_test.exs", "test/file_test.exs"])
+      assert result.test_patterns == ["test/pattern_test.exs", "test/file_test.exs"]
+    end
+
+    test "handles comma-separated test_patterns" do
+      result = CLIParser.parse(["-t", "test/first.exs,test/second.exs"])
+      assert result.test_patterns == ["test/first.exs", "test/second.exs"]
+    end
+
+    test "combines comma-separated patterns with file arguments" do
+      result = CLIParser.parse(["-t", "test/first.exs,test/second.exs", "test/third.exs"])
+      assert result.test_patterns == ["test/first.exs", "test/second.exs", "test/third.exs"]
+    end
+
+    test "resolves test file paths using PathResolver" do
+      result = CLIParser.parse(["-t", "test/sample_module_test.exs"])
+      assert result.test_files_paths == ["test/sample_module_test.exs"]
+    end
+
+    test "includes compile_timeout option" do
+      result = CLIParser.parse(["-c", "60"])
+      assert result.compile_timeout == 60_000
+    end
   end
 end
