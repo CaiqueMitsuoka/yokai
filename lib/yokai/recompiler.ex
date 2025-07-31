@@ -20,11 +20,13 @@ defmodule Yokai.Recompiler do
   end
 
   def recompile_all(opts \\ %{}) do
-    timeout = Map.get(opts, :compile_timeout)
-    test_files_paths = Map.get(opts, :test_files_paths)
-
-    GenServer.call(__MODULE__, :code, timeout)
-    GenServer.call(__MODULE__, {:tests, test_files_paths}, timeout)
+    with timeout <- Map.get(opts, :compile_timeout),
+         test_files_paths <- Map.get(opts, :test_files_paths),
+         :ok <- GenServer.call(__MODULE__, :code, timeout) do
+      GenServer.call(__MODULE__, {:tests, test_files_paths}, timeout)
+    else
+      error -> error
+    end
   end
 
   @impl true
@@ -43,6 +45,10 @@ defmodule Yokai.Recompiler do
   end
 
   defp compile_code do
-    IEx.Helpers.recompile()
+    case IEx.Helpers.recompile() do
+      :ok -> :ok
+      :noop -> :ok
+      :error -> :error
+    end
   end
 end
