@@ -54,6 +54,7 @@ defmodule Mix.Tasks.Watch do
 
       Logger.debug("Test modules: #{inspect(test_modules)}")
 
+      Application.delete_env(:ex_unit, :seed)
       ExUnit.run(test_modules)
     else
       _ -> Logger.error("Error running tests.")
