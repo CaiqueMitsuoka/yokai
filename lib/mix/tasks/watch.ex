@@ -6,10 +6,9 @@ defmodule Mix.Tasks.Watch do
 
   @impl Mix.Task
 
-  alias Yokai.ExsRecompiler
   alias Yokai.Options.CLIParser
-  alias Yokai.Recompiler
   alias Yokai.Initializer
+  alias Yokai.Runner
 
   def run(args) do
     options =
@@ -41,25 +40,7 @@ defmodule Mix.Tasks.Watch do
     end
   end
 
-  defp run_tests(opts) do
-    with :ok <- Initializer.loadpaths(),
-         :ok <- Recompiler.recompile_all(opts) do
-      Logger.info("Running tests...")
-
-      test_modules =
-        opts
-        |> Map.get(:test_files_paths)
-        |> Enum.map(&ExsRecompiler.find_modules_from_file(&1))
-        |> List.flatten()
-
-      Logger.debug("Test modules: #{inspect(test_modules)}")
-
-      Application.delete_env(:ex_unit, :seed)
-      ExUnit.run(test_modules)
-    else
-      _ -> Logger.error("Error running tests.")
-    end
-  end
+  defp run_tests(opts), do: Runner.start(opts)
 
   defp load_configs do
     Mix.Task.run("loadconfig")
