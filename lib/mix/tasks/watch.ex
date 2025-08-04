@@ -1,4 +1,38 @@
 defmodule Mix.Tasks.Watch do
+  @moduledoc """
+  Watches for file changes and automatically runs tests.
+
+  ## Usage
+
+      mix watch [test_patterns] [options]
+
+  ## Options
+
+    * `--watch-folders` (`-w`) - Comma-separated list of folders to watch for changes (default: "lib,test")
+    * `--test-patterns` (`-t`) - Comma-separated list of test patterns to run (default: "test/**/*_test.exs")
+    * `--compile-timeout` (`-c`) - Compilation timeout in seconds (default: 30)
+
+  ## Examples
+
+      # Watch default folders and run all tests
+      mix watch
+
+      # Watch specific folders
+      mix watch --watch-folders lib,test,config
+
+      # Run specific test patterns
+      mix watch --test-patterns "test/unit/**/*_test.exs,test/integration/**/*_test.exs"
+
+      # Set custom compile timeout
+      mix watch --compile-timeout 60
+
+      # Run specific test files
+      mix watch test/my_test.exs test/other_test.exs
+
+      # Combine options
+      mix watch test/unit test/integration -w lib,test -c 45
+  """
+
   use Mix.Task
   require Logger
 
