@@ -42,7 +42,7 @@ defmodule Yokai.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: [:test, :dev], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:file_system, "~> 1.0"}
     ]
   end
