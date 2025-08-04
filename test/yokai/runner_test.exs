@@ -10,7 +10,7 @@ defmodule Yokai.RunnerTest do
       }
 
       result = Runner.extract_test_modules(opts)
-      assert [Yokai.SampleModuleTest]
+      assert [SampleModuleTest] == result
     end
 
     test "handles empty test files paths" do
@@ -26,7 +26,7 @@ defmodule Yokai.RunnerTest do
       }
 
       result = Runner.extract_test_modules(opts)
-      assert [Yokai.SampleModuleTest, __MODULE__]
+      assert [SampleModuleTest, __MODULE__] == result
     end
   end
 
