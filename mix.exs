@@ -6,7 +6,7 @@ defmodule Yokai.MixProject do
       app: :yokai,
       description: "A test runner and watcher designed for fast interactive development",
       version: "0.2.0",
-      elixir: "~> 1.17.2",
+      elixir: "~> 1.17",
       package: package(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
