@@ -6,7 +6,7 @@ defmodule Yokai.Options.PathResolver do
 
       iex> PathResolver.resolve(["test/*"])
       ["test/sample_test.exs", "test/another_test.exs"]
-      
+
       iex> PathResolver.resolve(["test/specific_test.exs"])
       ["test/specific_test.exs"]
   """
@@ -19,20 +19,25 @@ defmodule Yokai.Options.PathResolver do
 
   defp resolve_single(pattern) do
     cond do
-      String.contains?(pattern, "*") ->
+      glob_pattern?(pattern) ->
         resolve_glob_pattern(pattern)
 
-      File.exists?(pattern) ->
-        if File.dir?(pattern) do
-          resolve_directory(pattern)
-        else
-          [pattern]
-        end
+      existing_directory?(pattern) ->
+        resolve_directory(pattern)
+
+      existing_file?(pattern) ->
+        [pattern]
 
       true ->
         []
     end
   end
+
+  defp glob_pattern?(pattern), do: String.contains?(pattern, "*")
+
+  defp existing_directory?(pattern), do: File.exists?(pattern) and File.dir?(pattern)
+
+  defp existing_file?(pattern), do: File.exists?(pattern) and File.regular?(pattern)
 
   defp resolve_glob_pattern(pattern) do
     pattern
