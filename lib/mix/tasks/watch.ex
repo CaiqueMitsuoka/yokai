@@ -43,6 +43,7 @@ defmodule Mix.Tasks.Watch do
   alias Yokai.Options.CLIParser
   alias Yokai.Initializer
   alias Yokai.Runner
+  alias Yokai.TUI
 
   def run(args) do
     options =
@@ -63,14 +64,28 @@ defmodule Mix.Tasks.Watch do
   end
 
   defp watch_files(opts) do
+    tui_listener = TUI.listen_new_command()
+
     receive do
+      :run ->
+        Logger.info("Triggered by the user")
+        Task.shutdown(tui_listener, :brutal_kill)
+        run_tests(opts)
+        watch_files(opts)
+
       {:file_event, _watcher_pid, {path, _events}} ->
         Logger.info("File changed: #{path}")
+        Task.shutdown(tui_listener, :brutal_kill)
         run_tests(opts)
         watch_files(opts)
 
       {:file_event, _watcher_pid, :stop} ->
         Logger.info("Watcher stopped.")
+
+      :quit ->
+        IO.puts("Bye bye")
+        Process.sleep(100)
+        System.halt(0)
     end
   end
 
