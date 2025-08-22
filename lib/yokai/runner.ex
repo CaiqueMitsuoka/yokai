@@ -4,8 +4,11 @@ defmodule Yokai.Runner do
   alias Yokai.Recompiler
   alias Yokai.ExsRecompiler
   alias Yokai.Initializer
+  alias Yokai.TUI
 
   def start(opts) do
+    TUI.clear()
+
     with :ok <- Initializer.loadpaths(),
          :ok <- Recompiler.recompile_all(opts) do
       test_modules = extract_test_modules(opts)

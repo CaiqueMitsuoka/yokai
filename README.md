@@ -54,7 +54,7 @@ Have a fast code reloader and a nice CLI to quick iterate on development.
 - [x] Hot reload project code before each run
 - [x] Hot reload test file before each run
 - [x] Accept test file patterns to select test e.g accept `test/*/sample*`
-- [ ] Option to clear console between run
+- [x] Option to clear console between run
 - [ ] Keypress to trigger a run
 - [ ] Keypress to run all tests
 - [ ] Keypress to redefine the pattern
