@@ -43,7 +43,8 @@ defmodule Yokai.MixProject do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:file_system, "~> 1.0"}
+      {:file_system, "~> 1.0"},
+      {:owl, "~> 0.12.2"}
     ]
   end
 end
