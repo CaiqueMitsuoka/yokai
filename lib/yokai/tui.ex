@@ -1,5 +1,10 @@
 defmodule Yokai.TUI do
+  alias Yokai.Options.CLIParser
+
   @commands %{
+    "w" =>
+      {{:update_options, "Enter the new test files pattern:",
+        &__MODULE__.format_test_pattern_update/1}, "Update the test files pattern"},
     "r" => {:run, "Rerun tests"},
     "q" => {:quit, "Quit"}
   }
@@ -26,11 +31,27 @@ defmodule Yokai.TUI do
     trimmed_input = String.trim(input)
 
     case Map.get(@commands, trimmed_input) do
-      {command, _description} ->
+      {command, _description} when is_atom(command) ->
         {:ok, command}
+
+      {command, _description} when is_tuple(command) ->
+        update_command(command)
 
       nil ->
         {:error, "Invalid command '#{trimmed_input}'. Please choose from the available options."}
+    end
+  end
+
+  defp update_command({:update_options, question, formatter} = command) do
+    input = Owl.IO.input(label: question)
+
+    case formatter.(input) do
+      {:error, msg} ->
+        Owl.IO.inspect(msg)
+        update_command(command)
+
+      result ->
+        result
     end
   end
 
@@ -47,6 +68,12 @@ defmodule Yokai.TUI do
     Commands:
     #{commands_text}
     """
+  end
+
+  def format_test_pattern_update(input) do
+    new_opts = CLIParser.test_patterns_to_map([input])
+
+    {:ok, {:update_options, new_opts}}
   end
 
   def clear do

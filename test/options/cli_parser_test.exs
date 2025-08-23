@@ -88,5 +88,25 @@ defmodule Yokai.Options.CLIParserTest do
       result = CLIParser.parse(["-c", "60"])
       assert result.compile_timeout == 60_000
     end
+
+    test "test_patterns_to_map returns correct map with test patterns and resolved paths" do
+      test_patterns = ["test/sample_module_test.exs"]
+      result = CLIParser.test_patterns_to_map(test_patterns)
+
+      assert result == %{
+               test_patterns: ["test/sample_module_test.exs"],
+               test_files_paths: ["test/sample_module_test.exs"]
+             }
+    end
+
+    test "test_patterns_to_map handles multiple patterns" do
+      test_patterns = ["test/sample_module_test.exs", "test/yokai_test.exs"]
+      result = CLIParser.test_patterns_to_map(test_patterns)
+
+      assert result == %{
+               test_patterns: ["test/sample_module_test.exs", "test/yokai_test.exs"],
+               test_files_paths: ["test/sample_module_test.exs", "test/yokai_test.exs"]
+             }
+    end
   end
 end

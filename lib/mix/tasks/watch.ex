@@ -73,6 +73,12 @@ defmodule Mix.Tasks.Watch do
         run_tests(opts)
         watch_files(opts)
 
+      {:update_options, new_opts} ->
+        opts = Map.merge(opts, new_opts)
+        Logger.info("Configurations updated.")
+        run_tests(opts)
+        watch_files(opts)
+
       {:file_event, _watcher_pid, {path, _events}} ->
         Logger.info("File changed: #{path}")
         Task.shutdown(tui_listener, :brutal_kill)

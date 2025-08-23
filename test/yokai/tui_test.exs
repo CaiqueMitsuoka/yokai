@@ -46,7 +46,7 @@ defmodule Yokai.TUITest do
       lines = String.split(menu_text, "\n")
 
       command_lines = Enum.filter(lines, &String.contains?(&1, " - "))
-      assert length(command_lines) == 2
+      assert length(command_lines) == 3
 
       assert Enum.any?(command_lines, &String.contains?(&1, "r - Rerun tests"))
       assert Enum.any?(command_lines, &String.contains?(&1, "q - Quit"))

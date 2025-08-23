@@ -18,15 +18,23 @@ defmodule Yokai.Options.CLIParser do
       )
 
     test_patterns = parse_test_patterns(files, opts)
-    test_files_paths = PathResolver.resolve(test_patterns)
+    test_map = test_patterns_to_map(test_patterns)
     watch_folders = Keyword.get(opts, :watch_folders, "lib,test") |> String.split(",")
     compile_timeout = Keyword.get(opts, :compile_timeout, 30) * 1000
 
     %Options{
       watch_folders: watch_folders,
-      test_patterns: test_patterns,
-      test_files_paths: test_files_paths,
       compile_timeout: compile_timeout
+    }
+    |> Map.merge(test_map)
+  end
+
+  def test_patterns_to_map(test_patterns) do
+    test_files_paths = PathResolver.resolve(test_patterns)
+
+    %{
+      test_patterns: test_patterns,
+      test_files_paths: test_files_paths
     }
   end
 
