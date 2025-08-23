@@ -1,6 +1,8 @@
 defmodule Yokai.ExsRecompiler do
   require Logger
 
+  alias Yokai.TUI
+
   def from_pattern(test_files_paths) do
     with :ok <- purge_test_modules(test_files_paths),
          :ok <- compile_test_files(test_files_paths),
@@ -63,7 +65,7 @@ defmodule Yokai.ExsRecompiler do
   end
 
   defp reload_test_helper do
-    Logger.info("Reloading test_helper.exs")
+    TUI.puts("Reloading test_helper.exs")
     test_helper_path = "test/test_helper.exs"
 
     if File.exists?(test_helper_path) do

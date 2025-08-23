@@ -2,8 +2,10 @@ defmodule Yokai.Application do
   use Application
   require Logger
 
+  alias Yokai.TUI
+
   def start(_type, _args) do
-    Logger.info("Starting Yokai app...")
+    TUI.puts("Starting Yokai app...")
     ensure_started()
     children = [Yokai.Recompiler]
 

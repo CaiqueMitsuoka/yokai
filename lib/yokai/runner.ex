@@ -15,7 +15,7 @@ defmodule Yokai.Runner do
       reset_seed()
       Logger.debug("Test modules: #{inspect(test_modules)}")
 
-      Logger.info("Running tests...")
+      TUI.puts("Running tests...")
       ExUnit.run(test_modules)
     else
       _ -> Logger.error("Error running tests.")

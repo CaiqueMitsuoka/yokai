@@ -76,6 +76,10 @@ defmodule Yokai.TUI do
     {:ok, {:update_options, new_opts}}
   end
 
+  def puts(string) do
+    Owl.IO.puts([string])
+  end
+
   def clear do
     IO.write("\e[2J\e[H")
   end

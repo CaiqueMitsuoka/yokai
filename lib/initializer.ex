@@ -1,13 +1,15 @@
 defmodule Yokai.Initializer do
   require Logger
 
+  alias Yokai.TUI
+
   def run(opts) do
     with _ <- Mix.Task.run("loadconfig"),
          :ok <- Mix.Task.run("app.config"),
          {:ok, [:file_system]} <- Application.ensure_all_started(:file_system),
          {:ok, _} <- start_application(),
          :ok <- ExUnit.start(auto_run: false) do
-      Logger.info("Starting Yokai...")
+      TUI.puts("Starting Yokai...")
 
       opts
     else

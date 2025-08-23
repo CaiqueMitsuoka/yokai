@@ -68,25 +68,25 @@ defmodule Mix.Tasks.Watch do
 
     receive do
       :run ->
-        Logger.info("Triggered by the user")
+        TUI.puts("Triggered by the user")
         Task.shutdown(tui_listener, :brutal_kill)
         run_tests(opts)
         watch_files(opts)
 
       {:update_options, new_opts} ->
         opts = Map.merge(opts, new_opts)
-        Logger.info("Configurations updated.")
+        TUI.puts("Configurations updated.")
         run_tests(opts)
         watch_files(opts)
 
       {:file_event, _watcher_pid, {path, _events}} ->
-        Logger.info("File changed: #{path}")
+        TUI.puts("File changed: #{path}")
         Task.shutdown(tui_listener, :brutal_kill)
         run_tests(opts)
         watch_files(opts)
 
       {:file_event, _watcher_pid, :stop} ->
-        Logger.info("Watcher stopped.")
+        TUI.puts("Watcher stopped.")
 
       :quit ->
         IO.puts("Bye bye")
@@ -102,6 +102,6 @@ defmodule Mix.Tasks.Watch do
 
     Mix.Task.run("app.config")
 
-    Logger.info("Configurations loaded.")
+    TUI.puts("Configurations loaded.")
   end
 end
