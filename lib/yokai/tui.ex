@@ -19,12 +19,9 @@ defmodule Yokai.TUI do
   end
 
   def listen_with_menu do
-    menu_text = build_menu_text()
+    build_menu_text() |> Owl.IO.puts()
 
-    Owl.IO.input(
-      label: menu_text,
-      cast: &validate_command/1
-    )
+    Owl.IO.input(cast: &validate_command/1)
   end
 
   def validate_command(input) do
@@ -56,18 +53,23 @@ defmodule Yokai.TUI do
   end
 
   def build_menu_text do
-    commands_text =
+    commands =
       @commands
-      |> Enum.map(fn {key, {_command, description}} -> "#{key} - #{description}" end)
-      |> Enum.join("\n")
+      |> Enum.map(fn
+        {key, {_command, description}} ->
+          [
+            Owl.Data.tag(key, :bright),
+            " - ",
+            description
+          ]
+      end)
+      |> Enum.intersperse("\n")
 
-    """
-
-    Watching for changes...
-
-    Commands:
-    #{commands_text}
-    """
+    []
+    |> Kernel.++(["\nWatching for changes...\n\n"])
+    |> Kernel.++(["Commands:\n"])
+    |> Kernel.++(commands)
+    |> List.flatten()
   end
 
   def format_test_pattern_update(input) do
