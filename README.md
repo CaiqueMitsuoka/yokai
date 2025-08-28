@@ -17,7 +17,7 @@ end
 
 def deps do
   [
-    {:yokai, "~> 0.3.0"}
+    {:yokai, "~> 0.3.1"}
   ]
 end
 ```
