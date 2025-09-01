@@ -64,7 +64,7 @@ defmodule Mix.Tasks.Watch do
   end
 
   defp watch_files(opts) do
-    tui_listener = TUI.listen_new_command()
+    tui_listener = TUI.listen_new_command(opts)
 
     receive do
       :run ->
@@ -73,10 +73,14 @@ defmodule Mix.Tasks.Watch do
         run_tests(opts)
         watch_files(opts)
 
-      {:update_options, new_opts} ->
-        opts = Map.merge(opts, new_opts)
+      {:run_with_opts, new_opts} ->
         TUI.puts("Configurations updated.")
-        run_tests(opts)
+        run_tests(new_opts)
+        watch_files(new_opts)
+
+      {:run_once_with_opts, temp_opts} ->
+        TUI.puts("Running once...")
+        run_tests(temp_opts)
         watch_files(opts)
 
       {:file_event, _watcher_pid, {path, _events}} ->

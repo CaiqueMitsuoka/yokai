@@ -4,27 +4,27 @@ defmodule Yokai.TUI do
   @commands %{
     "w" =>
       {{:update_options, "Enter the new test files pattern:",
-        &__MODULE__.format_test_pattern_update/1}, "Update the test files pattern"},
+        &__MODULE__.format_test_pattern_update/2}, "Update the test files pattern"},
     "r" => {:run, "Rerun tests"},
     "q" => {:quit, "Quit"}
   }
 
-  def listen_new_command do
+  def listen_new_command(options) do
     main_process = self()
 
     Task.async(fn ->
-      command = listen_with_menu()
+      command = listen_with_menu(options)
       send(main_process, command)
     end)
   end
 
-  def listen_with_menu do
+  def listen_with_menu(options) do
     build_menu_text() |> Owl.IO.puts()
 
-    Owl.IO.input(cast: &validate_command/1)
+    Owl.IO.input(cast: &validate_command(&1, options))
   end
 
-  def validate_command(input) do
+  def validate_command(input, options) do
     trimmed_input = String.trim(input)
 
     case Map.get(@commands, trimmed_input) do
@@ -32,20 +32,20 @@ defmodule Yokai.TUI do
         {:ok, command}
 
       {command, _description} when is_tuple(command) ->
-        update_command(command)
+        update_command(command, options)
 
       nil ->
         {:error, "Invalid command '#{trimmed_input}'. Please choose from the available options."}
     end
   end
 
-  defp update_command({:update_options, question, formatter} = command) do
+  defp update_command({:update_options, question, formatter} = command, options) do
     input = Owl.IO.input(label: question)
 
-    case formatter.(input) do
+    case formatter.(input, options) do
       {:error, msg} ->
         Owl.IO.inspect(msg)
-        update_command(command)
+        update_command(command, options)
 
       result ->
         result
@@ -72,10 +72,11 @@ defmodule Yokai.TUI do
     |> List.flatten()
   end
 
-  def format_test_pattern_update(input) do
-    new_opts = CLIParser.test_patterns_to_map([input])
+  def format_test_pattern_update(input, options) do
+    options_changes = CLIParser.test_patterns_to_map([input])
 
-    {:ok, {:update_options, new_opts}}
+    new_options = Map.merge(options, options_changes)
+    {:ok, {:run_with_opts, new_options}}
   end
 
   def puts(string) do

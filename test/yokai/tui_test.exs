@@ -2,48 +2,53 @@ defmodule Yokai.TUITest do
   use ExUnit.Case
   import ExUnit.CaptureIO
 
-  describe "validate_command/1" do
-    test "returns {:ok, :run} for valid 'r' command" do
-      assert {:ok, :run} = Yokai.TUI.validate_command("r")
+  describe "validate_command/2" do
+    setup do
+      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
+      {:ok, options: options}
     end
 
-    test "returns {:ok, :quit} for valid 'q' command" do
-      assert {:ok, :quit} = Yokai.TUI.validate_command("q")
+    test "returns {:ok, :run} for valid 'r' command", %{options: options} do
+      assert {:ok, :run} = Yokai.TUI.validate_command("r", options)
     end
 
-    test "handles whitespace around valid commands" do
-      assert {:ok, :run} = Yokai.TUI.validate_command("  r  ")
-      assert {:ok, :quit} = Yokai.TUI.validate_command("\nq\t")
+    test "returns {:ok, :quit} for valid 'q' command", %{options: options} do
+      assert {:ok, :quit} = Yokai.TUI.validate_command("q", options)
     end
 
-    test "returns error for invalid commands" do
-      assert {:error, msg} = Yokai.TUI.validate_command("x")
+    test "handles whitespace around valid commands", %{options: options} do
+      assert {:ok, :run} = Yokai.TUI.validate_command("  r  ", options)
+      assert {:ok, :quit} = Yokai.TUI.validate_command("\nq\t", options)
+    end
+
+    test "returns error for invalid commands", %{options: options} do
+      assert {:error, msg} = Yokai.TUI.validate_command("x", options)
       assert msg == "Invalid command 'x'. Please choose from the available options."
     end
 
-    test "returns error for empty input" do
-      assert {:error, msg} = Yokai.TUI.validate_command("")
+    test "returns error for empty input", %{options: options} do
+      assert {:error, msg} = Yokai.TUI.validate_command("", options)
       assert msg == "Invalid command ''. Please choose from the available options."
     end
 
-    test "returns error for multi-character input" do
-      assert {:error, msg} = Yokai.TUI.validate_command("run")
+    test "returns error for multi-character input", %{options: options} do
+      assert {:error, msg} = Yokai.TUI.validate_command("run", options)
       assert msg == "Invalid command 'run'. Please choose from the available options."
     end
 
-    test "handles all available commands" do
-      assert {:ok, :run} = Yokai.TUI.validate_command("r")
-      assert {:ok, :quit} = Yokai.TUI.validate_command("q")
+    test "handles all available commands", %{options: options} do
+      assert {:ok, :run} = Yokai.TUI.validate_command("r", options)
+      assert {:ok, :quit} = Yokai.TUI.validate_command("q", options)
 
       # Note: The 'w' command requires interactive input and can't be easily tested
       # in a unit test without mocking Owl.IO.input, so we skip testing it here
     end
 
-    test "handles case sensitivity" do
-      assert {:error, msg} = Yokai.TUI.validate_command("R")
+    test "handles case sensitivity", %{options: options} do
+      assert {:error, msg} = Yokai.TUI.validate_command("R", options)
       assert msg == "Invalid command 'R'. Please choose from the available options."
 
-      assert {:error, msg} = Yokai.TUI.validate_command("Q")
+      assert {:error, msg} = Yokai.TUI.validate_command("Q", options)
       assert msg == "Invalid command 'Q'. Please choose from the available options."
     end
   end
@@ -125,58 +130,72 @@ defmodule Yokai.TUITest do
     end
   end
 
-  describe "listen_new_command/0" do
+  describe "listen_new_command/1" do
     test "returns a task" do
-      task = Yokai.TUI.listen_new_command()
+      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
+      task = Yokai.TUI.listen_new_command(options)
       assert %Task{} = task
     end
   end
 
-  describe "format_test_pattern_update/1" do
-    test "formats valid test pattern input" do
-      result = Yokai.TUI.format_test_pattern_update("test/my_test.exs")
+  describe "format_test_pattern_update/2" do
+    setup do
+      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
+      {:ok, options: options}
+    end
 
-      assert {:ok, {:update_options, opts}} = result
+    test "formats valid test pattern input", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("test/my_test.exs", options)
+
+      assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)
       assert Map.has_key?(opts, :test_patterns)
     end
 
-    test "handles multiple test patterns" do
-      result = Yokai.TUI.format_test_pattern_update("test/**/*_test.exs")
+    test "handles multiple test patterns", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("test/**/*_test.exs", options)
 
-      assert {:ok, {:update_options, opts}} = result
+      assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)
     end
 
-    test "formats empty pattern" do
-      result = Yokai.TUI.format_test_pattern_update("")
+    test "formats empty pattern", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("", options)
 
-      assert {:ok, {:update_options, opts}} = result
+      assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)
     end
 
-    test "handles complex glob patterns" do
-      result = Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs")
+    test "handles complex glob patterns", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs", options)
 
-      assert {:ok, {:update_options, opts}} = result
+      assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)
       assert Map.has_key?(opts, :test_patterns)
     end
 
-    test "handles single file pattern" do
-      result = Yokai.TUI.format_test_pattern_update("test/specific_test.exs")
+    test "handles single file pattern", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("test/specific_test.exs", options)
 
-      assert {:ok, {:update_options, opts}} = result
+      assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)
     end
 
-    test "always returns tuple with update_options" do
+    test "always returns tuple with run_with_opts", %{options: options} do
       inputs = ["", "test/", "**/*", "invalid/path/that/doesnt/exist"]
 
       for input <- inputs do
-        result = Yokai.TUI.format_test_pattern_update(input)
-        assert {:ok, {:update_options, _opts}} = result
+        result = Yokai.TUI.format_test_pattern_update(input, options)
+        assert {:ok, {:run_with_opts, _opts}} = result
       end
+    end
+
+    test "merges options correctly", %{options: options} do
+      result = Yokai.TUI.format_test_pattern_update("test/new_test.exs", options)
+
+      assert {:ok, {:run_with_opts, merged_opts}} = result
+      assert Map.get(merged_opts, :watch_folders) == ["lib", "test"]
+      assert Map.has_key?(merged_opts, :test_patterns)
     end
   end
 
@@ -193,13 +212,14 @@ defmodule Yokai.TUITest do
 
   describe "command structure" do
     test "commands module attribute contains expected commands" do
-      assert {:ok, :run} = Yokai.TUI.validate_command("r")
-      assert {:ok, :quit} = Yokai.TUI.validate_command("q")
+      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
+      assert {:ok, :run} = Yokai.TUI.validate_command("r", options)
+      assert {:ok, :quit} = Yokai.TUI.validate_command("q", options)
 
       # 'w' command exists but requires interactive input, so we just
       # verify it doesn't return the "invalid command" error message
       assert {:error, "Invalid command 'x'. Please choose from the available options."} =
-               Yokai.TUI.validate_command("x")
+               Yokai.TUI.validate_command("x", options)
     end
   end
 
