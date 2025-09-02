@@ -38,6 +38,8 @@ defmodule Yokai.Options.CLIParser do
     }
   end
 
+  def default_test_pattern, do: ["test/**/*_test.exs"]
+
   defp parse_test_patterns(files, opts) do
     case Keyword.get(opts, :test_patterns, []) do
       patterns when is_binary(patterns) -> String.split(patterns, ",")
@@ -45,7 +47,7 @@ defmodule Yokai.Options.CLIParser do
     end
     |> Kernel.++(files)
     |> case do
-      [] -> ["test/**/*_test.exs"]
+      [] -> default_test_pattern()
       test_patterns -> test_patterns
     end
   end

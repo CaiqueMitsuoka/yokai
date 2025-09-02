@@ -5,6 +5,7 @@ defmodule Yokai.TUI do
     "w" =>
       {{:update_options, "Enter the new test files pattern:",
         &__MODULE__.format_test_pattern_update/2}, "Update the test files pattern"},
+    "a" => {{:once_with_options, &__MODULE__.run_all/1}, "Run all tests once"},
     "r" => {:run, "Rerun tests"},
     "q" => {:quit, "Quit"}
   }
@@ -31,8 +32,11 @@ defmodule Yokai.TUI do
       {command, _description} when is_atom(command) ->
         {:ok, command}
 
-      {command, _description} when is_tuple(command) ->
+      {{:update_options, _, _} = command, _description} ->
         update_command(command, options)
+
+      {{:once_with_options, options_updater}, _description} ->
+        {:ok, {:run_once_with_opts, options_updater.(options)}}
 
       nil ->
         {:error, "Invalid command '#{trimmed_input}'. Please choose from the available options."}
@@ -77,6 +81,14 @@ defmodule Yokai.TUI do
 
     new_options = Map.merge(options, options_changes)
     {:ok, {:run_with_opts, new_options}}
+  end
+
+  def run_all(options) do
+    options_with_run_all =
+      CLIParser.default_test_pattern()
+      |> CLIParser.test_patterns_to_map()
+
+    Map.merge(options, options_with_run_all)
   end
 
   def puts(string) do

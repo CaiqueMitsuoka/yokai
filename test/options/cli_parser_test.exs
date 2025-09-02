@@ -109,4 +109,10 @@ defmodule Yokai.Options.CLIParserTest do
              }
     end
   end
+
+  describe "default_test_pattern/0" do
+    test "returns default test pattern" do
+      assert CLIParser.default_test_pattern() == ["test/**/*_test.exs"]
+    end
+  end
 end

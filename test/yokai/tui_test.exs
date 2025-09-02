@@ -44,6 +44,13 @@ defmodule Yokai.TUITest do
       # in a unit test without mocking Owl.IO.input, so we skip testing it here
     end
 
+    test "returns {:ok, {:run_once_with_opts, opts}} for valid 'a' command", %{options: options} do
+      assert {:ok, {:run_once_with_opts, opts}} = Yokai.TUI.validate_command("a", options)
+      assert is_map(opts)
+      assert Map.has_key?(opts, :test_patterns)
+      assert Map.has_key?(opts, :test_files_paths)
+    end
+
     test "handles case sensitivity", %{options: options} do
       assert {:error, msg} = Yokai.TUI.validate_command("R", options)
       assert msg == "Invalid command 'R'. Please choose from the available options."
@@ -231,6 +238,35 @@ defmodule Yokai.TUITest do
         end)
 
       assert output == "\e[2J\e[H"
+    end
+  end
+
+  describe "run_all/1" do
+    setup do
+      options = %{test_patterns: ["test/custom_test.exs"], watch_folders: ["lib", "test"]}
+      {:ok, options: options}
+    end
+
+    test "returns options with default test pattern", %{options: options} do
+      result = Yokai.TUI.run_all(options)
+
+      assert is_map(result)
+      assert Map.has_key?(result, :test_patterns)
+      assert Map.has_key?(result, :test_files_paths)
+      assert result.test_patterns == ["test/**/*_test.exs"]
+    end
+
+    test "merges with existing options", %{options: options} do
+      result = Yokai.TUI.run_all(options)
+
+      assert Map.get(result, :watch_folders) == ["lib", "test"]
+    end
+
+    test "overrides test patterns with default", %{options: options} do
+      result = Yokai.TUI.run_all(options)
+
+      assert result.test_patterns == ["test/**/*_test.exs"]
+      refute result.test_patterns == ["test/custom_test.exs"]
     end
   end
 end
