@@ -38,6 +38,19 @@ mix watch test/domain/*
 mix watch --compile-timeout 60
 ```
 
+While running, all changes to any file at `lib/` or `test/` will trigger a run.
+
+But while it waits for a file change, you can enter commands yourself.
+
+### Menu
+
+| Command | Description                   |
+| ------- | ----------------------------- |
+| a       | Run all tests once            |
+| q       | Quit                          |
+| r       | Rerun tests                   |
+| w       | Update the test files pattern |
+
 ## Reason
 
 The point is to have a faster iteration for then developing test/changes or applying TDD.
@@ -55,8 +68,8 @@ Have a fast code reloader and a nice CLI to quick iterate on development.
 - [x] Hot reload test file before each run
 - [x] Accept test file patterns to select test e.g accept `test/*/sample*`
 - [x] Option to clear console between run
-- [ ] Keypress to trigger a run
-- [ ] Keypress to run all tests
-- [ ] Keypress to redefine the pattern
+- [ ] Keypress to trigger a run(Partially implemented, requires enter)
+- [ ] Keypress to run all tests(Partially implemented, requires enter)
+- [ ] Keypress to redefine the pattern(Partially implemented, requires enter)
 - [ ] MCP server/tool for client to collect latest test run results.
 - [ ] MCP tool to redefine runned configuration
