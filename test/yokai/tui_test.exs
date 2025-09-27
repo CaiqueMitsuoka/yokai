@@ -174,7 +174,8 @@ defmodule Yokai.TUITest do
     end
 
     test "handles complex glob patterns", %{options: options} do
-      result = Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs", options)
+      result =
+        Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs", options)
 
       assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)

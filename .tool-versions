@@ -1,2 +1,6 @@
-erlang 28.0.2
-elixir v1.18.4-otp-28
+# erlang 26.2.5
+# elixir v1.18.4-otp-26
+# erlang 27.0.1
+# elixir v1.18.4-otp-27
+erlang 27.0.1
+elixir 1.18.4-otp-27
