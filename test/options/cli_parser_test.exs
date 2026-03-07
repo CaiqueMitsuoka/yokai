@@ -13,6 +13,7 @@ defmodule Yokai.Options.CLIParserTest do
                  "test/options/cli_parser_test.exs",
                  "test/options/path_resolver_test.exs",
                  "test/sample_module_test.exs",
+                 "test/yokai/io_proxy_test.exs",
                  "test/yokai/runner_test.exs",
                  "test/yokai/tui_test.exs",
                  "test/yokai_test.exs"
@@ -28,6 +29,7 @@ defmodule Yokai.Options.CLIParserTest do
                  "test/options/cli_parser_test.exs",
                  "test/options/path_resolver_test.exs",
                  "test/sample_module_test.exs",
+                 "test/yokai/io_proxy_test.exs",
                  "test/yokai/runner_test.exs",
                  "test/yokai/tui_test.exs",
                  "test/yokai_test.exs"

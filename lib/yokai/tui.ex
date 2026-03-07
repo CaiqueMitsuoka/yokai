@@ -1,5 +1,6 @@
 defmodule Yokai.TUI do
   alias Yokai.Options.CLIParser
+  alias Yokai.IOProxy
 
   @commands %{
     "w" =>
@@ -12,9 +13,8 @@ defmodule Yokai.TUI do
 
   def start do
     terminal = Termite.Terminal.start()
-    # Re-enable \n -> \r\n translation after Termite sets raw mode.
-    # Must target /dev/tty explicitly since subprocesses don't inherit the terminal.
-    System.cmd("stty", ["-f", "/dev/tty", "onlcr"])
+    IOProxy.start()
+
     {:ok, terminal}
   end
 
@@ -117,6 +117,6 @@ defmodule Yokai.TUI do
   end
 
   def clear do
-    # IO.write(321231"\e[2J\e[H")
+    IO.write("\e[2J\e[H")
   end
 end
