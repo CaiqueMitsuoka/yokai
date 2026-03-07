@@ -10,6 +10,14 @@ defmodule Yokai.TUI do
     "q" => {:quit, "Quit"}
   }
 
+  def start do
+    terminal = Termite.Terminal.start()
+    # Re-enable \n -> \r\n translation after Termite sets raw mode.
+    # Must target /dev/tty explicitly since subprocesses don't inherit the terminal.
+    System.cmd("stty", ["-f", "/dev/tty", "onlcr"])
+    {:ok, terminal}
+  end
+
   def listen_new_command(options) do
     main_process = self()
 
@@ -19,10 +27,29 @@ defmodule Yokai.TUI do
     end)
   end
 
-  def listen_with_menu(options) do
-    build_menu_text() |> Owl.IO.puts()
+  def show_menu do
+    build_menu_text() |> puts()
+  end
 
-    Owl.IO.input(cast: &validate_command(&1, options))
+  def listen_with_menu(options) do
+    show_menu()
+
+    listen_for_keypress(options)
+  end
+
+  defp listen_for_keypress(options) do
+    case Termite.Terminal.poll(options.terminal) do
+      {:data, key} ->
+        key = String.trim(key)
+
+        case validate_command(key, options) do
+          {:ok, command} -> command
+          {:error, _msg} -> listen_for_keypress(options)
+        end
+
+      _ ->
+        listen_for_keypress(options)
+    end
   end
 
   def validate_command(input, options) do
@@ -44,11 +71,13 @@ defmodule Yokai.TUI do
   end
 
   defp update_command({:update_options, question, formatter} = command, options) do
-    input = Owl.IO.input(label: question)
+    IO.write("\n" <> question <> " ")
+    input = IO.gets("") |> String.trim()
+    IO.puts("")
 
     case formatter.(input, options) do
       {:error, msg} ->
-        Owl.IO.inspect(msg)
+        puts(msg)
         update_command(command, options)
 
       result ->
@@ -61,19 +90,11 @@ defmodule Yokai.TUI do
       @commands
       |> Enum.map(fn
         {key, {_command, description}} ->
-          [
-            Owl.Data.tag(key, :bright),
-            " - ",
-            description
-          ]
+          "#{key} - #{description}"
       end)
-      |> Enum.intersperse("\n")
+      |> Enum.join("\n")
 
-    []
-    |> Kernel.++(["\nWatching for changes...\n\n"])
-    |> Kernel.++(["Commands:\n"])
-    |> Kernel.++(commands)
-    |> List.flatten()
+    "\nWatching for changes...\n\nCommands:\n#{commands}"
   end
 
   def format_test_pattern_update(input, options) do
@@ -92,10 +113,10 @@ defmodule Yokai.TUI do
   end
 
   def puts(string) do
-    Owl.IO.puts([string])
+    IO.puts(string)
   end
 
   def clear do
-    IO.write("\e[2J\e[H")
+    # IO.write(321231"\e[2J\e[H")
   end
 end

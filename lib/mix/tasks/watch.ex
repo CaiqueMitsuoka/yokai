@@ -64,38 +64,43 @@ defmodule Mix.Tasks.Watch do
   end
 
   defp watch_files(opts) do
-    tui_listener = TUI.listen_new_command(opts)
+    TUI.show_menu()
+    ref = opts.terminal.reader
 
     receive do
-      :run ->
-        TUI.puts("Triggered by the user")
-        Task.shutdown(tui_listener, :brutal_kill)
-        run_tests(opts)
-        watch_files(opts)
+      {^ref, {:data, key}} ->
+        case TUI.validate_command(String.trim(key), opts) do
+          {:ok, :run} ->
+            TUI.puts("Triggered by the user")
+            run_tests(opts)
+            watch_files(opts)
 
-      {:run_with_opts, new_opts} ->
-        TUI.puts("Configurations updated.")
-        run_tests(new_opts)
-        watch_files(new_opts)
+          {:ok, :quit} ->
+            IO.puts("Bye bye")
+            Process.sleep(100)
+            System.halt(0)
 
-      {:run_once_with_opts, temp_opts} ->
-        TUI.puts("Running once...")
-        run_tests(temp_opts)
-        watch_files(opts)
+          {:ok, {:run_with_opts, new_opts}} ->
+            TUI.puts("Configurations updated.")
+            run_tests(new_opts)
+            watch_files(new_opts)
+
+          {:ok, {:run_once_with_opts, temp_opts}} ->
+            TUI.puts("Running once...")
+            run_tests(temp_opts)
+            watch_files(opts)
+
+          {:error, _} ->
+            watch_files(opts)
+        end
 
       {:file_event, _watcher_pid, {path, _events}} ->
         TUI.puts("File changed: #{path}")
-        Task.shutdown(tui_listener, :brutal_kill)
         run_tests(opts)
         watch_files(opts)
 
       {:file_event, _watcher_pid, :stop} ->
         TUI.puts("Watcher stopped.")
-
-      :quit ->
-        IO.puts("Bye bye")
-        Process.sleep(100)
-        System.halt(0)
     end
   end
 

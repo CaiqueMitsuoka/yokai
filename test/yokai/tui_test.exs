@@ -41,7 +41,7 @@ defmodule Yokai.TUITest do
       assert {:ok, :quit} = Yokai.TUI.validate_command("q", options)
 
       # Note: The 'w' command requires interactive input and can't be easily tested
-      # in a unit test without mocking Owl.IO.input, so we skip testing it here
+      # in a unit test without mocking termite input, so we skip testing it here
     end
 
     test "returns {:ok, {:run_once_with_opts, opts}} for valid 'a' command", %{options: options} do
@@ -62,78 +62,51 @@ defmodule Yokai.TUITest do
 
   describe "build_menu_text/0" do
     test "generates menu with all available commands" do
-      menu_list = Yokai.TUI.build_menu_text()
+      menu_text = Yokai.TUI.build_menu_text()
 
-      text_content =
-        menu_list
-        |> List.flatten()
-        |> Enum.map(fn
-          %Owl.Tag{data: data} -> data
-          item when is_binary(item) -> item
-          _ -> ""
-        end)
-        |> Enum.join("")
-
-      assert text_content =~ "Watching for changes..."
-      assert text_content =~ "Rerun tests"
-      assert text_content =~ "Quit"
+      assert is_binary(menu_text)
+      assert menu_text =~ "Watching for changes..."
+      assert menu_text =~ "Rerun tests"
+      assert menu_text =~ "Quit"
+      assert menu_text =~ "Update the test files pattern"
+      assert menu_text =~ "Run all tests once"
     end
 
-    test "menu includes both commands in correct format" do
-      menu_list = Yokai.TUI.build_menu_text()
+    test "menu includes commands with correct keys" do
+      menu_text = Yokai.TUI.build_menu_text()
 
-      flattened = List.flatten(menu_list)
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Watching for changes...")
-             end)
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Rerun tests")
-             end)
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Quit")
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "r"} -> true
-               _ -> false
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "q"} -> true
-               _ -> false
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "w"} -> true
-               _ -> false
-             end)
+      assert menu_text =~ "r - Rerun tests"
+      assert menu_text =~ "q - Quit"
+      assert menu_text =~ "w - Update the test files pattern"
+      assert menu_text =~ "a - Run all tests once"
     end
 
     test "menu structure includes all required sections" do
-      menu_list = Yokai.TUI.build_menu_text()
-      flattened = List.flatten(menu_list)
+      menu_text = Yokai.TUI.build_menu_text()
 
-      assert Enum.at(flattened, 0) == "\nWatching for changes...\n\n"
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && item == "Commands:\n"
-             end)
-
-      newline_count = Enum.count(flattened, fn item -> item == "\n" end)
-      assert newline_count > 0
+      assert String.starts_with?(menu_text, "\nWatching for changes...\n\n")
+      assert menu_text =~ "Commands:\n"
     end
 
-    test "returns a list structure" do
-      menu_list = Yokai.TUI.build_menu_text()
+    test "returns a string" do
+      menu_text = Yokai.TUI.build_menu_text()
 
-      assert is_list(menu_list)
-      assert length(menu_list) > 0
+      assert is_binary(menu_text)
+      assert String.length(menu_text) > 10
+    end
 
-      flattened = List.flatten(menu_list)
-      assert length(flattened) > 5
+    test "menu format is human readable" do
+      menu_text = Yokai.TUI.build_menu_text()
+
+      lines = String.split(menu_text, "\n")
+      assert length(lines) >= 5
+
+      # Should contain header
+      assert Enum.any?(lines, &String.contains?(&1, "Watching for changes"))
+      assert Enum.any?(lines, &String.contains?(&1, "Commands:"))
+
+      # Should contain command descriptions
+      assert Enum.any?(lines, &String.contains?(&1, " - "))
     end
   end
 

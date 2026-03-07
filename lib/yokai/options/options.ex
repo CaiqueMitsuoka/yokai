@@ -8,5 +8,6 @@ defmodule Yokai.Options do
             test_files_paths: [],
             watch_folders: ["lib", "test"],
             exit: false,
-            compile_timeout: 30_000
+            compile_timeout: 30_000,
+            terminal: nil
 end
