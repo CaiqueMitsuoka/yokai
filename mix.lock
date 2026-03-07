@@ -10,6 +10,6 @@
   "nimble_parsec": {:hex, :nimble_parsec, "1.4.0", "51f9b613ea62cfa97b25ccc2c1b4216e81df970acd8e16e8d1bdc58fef21370d", [:mix], [], "hexpm", "9c565862810fb383e9838c1dd2d7d2c437b3d13b267414ba6af33e50d2d1cf28"},
   "owl": {:hex, :owl, "0.12.2", "65906b525e5c3ef51bab6cba7687152be017aebe1da077bb719a5ee9f7e60762", [:mix], [{:ucwidth, "~> 0.2", [hex: :ucwidth, repo: "hexpm", optional: true]}], "hexpm", "6398efa9e1fea70a04d24231e10dcd66c1ac1aa2da418d20ef5357ec61de2880"},
   "process_tree": {:hex, :process_tree, "0.2.1", "4ebcaa96c64a7833467909f49fee28a8e62eed04975613f4c81b4b99424f7e8a", [:mix], [], "hexpm", "68eee6bf0514351aeeda7037f1a6003c0e25de48fe6b7d15a1b0aebb4b35e713"},
-  "termite": {:hex, :termite, "0.3.0", "3349938ba2bdad6d52f4f5b5da05f88e9374d7a6f4670449c6ff62d5daf232ca", [:mix], [], "hexpm", "1e8371a45d79ff966a3d850c6258be0fed0bc294674b18bcfe8b7cec43896621"},
+  "termite": {:hex, :termite, "0.4.0", "d369b21c2f426c42b4a6481a1a054053552fa24c2e2918f9d58485f3bd52ae6a", [:mix], [], "hexpm", "86f0c39f53363d6676ee21789e7de3c344258b037eee29a3d92a0a7abdc76f3d"},
   "typed_struct": {:hex, :typed_struct, "0.3.0", "939789e3c1dca39d7170c87f729127469d1315dcf99fee8e152bb774b17e7ff7", [:mix], [], "hexpm", "c50bd5c3a61fe4e198a8504f939be3d3c85903b382bde4865579bc23111d1b6d"},
 }
