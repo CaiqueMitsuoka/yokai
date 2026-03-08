@@ -31,6 +31,7 @@ defmodule Yokai.Recompiler do
 
   @impl true
   def init(_) do
+    Yokai.IOProxy.set_group_leader()
     {:ok, %{}}
   end
 

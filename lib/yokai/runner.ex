@@ -4,10 +4,12 @@ defmodule Yokai.Runner do
   alias Yokai.Recompiler
   alias Yokai.ExsRecompiler
   alias Yokai.Initializer
+  alias Yokai.IOProxy
   alias Yokai.TUI
 
   def start(opts) do
     TUI.clear()
+    IOProxy.ensure_logger_wrapped()
 
     with :ok <- Initializer.loadpaths(),
          :ok <- Recompiler.recompile_all(opts) do

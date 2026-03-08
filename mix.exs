@@ -44,6 +44,7 @@ defmodule Yokai.MixProject do
     [
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:file_system, "~> 1.0"},
+      {:termite, "~> 0.4.0"},
       {:owl, "~> 0.12.2"}
     ]
   end

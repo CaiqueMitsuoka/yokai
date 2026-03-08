@@ -1,6 +1,103 @@
 defmodule Yokai.TUITest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import ExUnit.CaptureIO
+
+  defp fake_terminal do
+    ref = make_ref()
+    %{reader: ref, adapter: :fake}
+  end
+
+  defp start_tui(terminal) do
+    {:ok, pid} = GenServer.start_link(Yokai.TUI, terminal: terminal)
+    pid
+  end
+
+  describe "start_link/1" do
+    test "starts as a GenServer" do
+      terminal = fake_terminal()
+      {:ok, pid} = GenServer.start_link(Yokai.TUI, terminal: terminal)
+      assert Process.alive?(pid)
+      GenServer.stop(pid)
+    end
+  end
+
+  describe "subscribe/1" do
+    test "returns {:ok, terminal}" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      assert {:ok, ^terminal} = GenServer.call(pid, {:subscribe, self()})
+
+      GenServer.stop(pid)
+    end
+
+    test "returns terminal via :terminal call" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      assert ^terminal = GenServer.call(pid, :terminal)
+
+      GenServer.stop(pid)
+    end
+  end
+
+  describe "message forwarding" do
+    test "forwards terminal input to subscriber" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      GenServer.call(pid, {:subscribe, self()})
+      send(pid, {ref, {:data, "r"}})
+
+      assert_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "does not forward when no subscriber" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      send(pid, {ref, {:data, "r"}})
+
+      refute_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "cleans up subscriber on DOWN" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      subscriber = spawn(fn -> Process.sleep(:infinity) end)
+      GenServer.call(pid, {:subscribe, subscriber})
+
+      Process.exit(subscriber, :kill)
+      Process.sleep(50)
+
+      send(pid, {ref, {:data, "r"}})
+      refute_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "does not forward unrelated messages" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      GenServer.call(pid, {:subscribe, self()})
+
+      unrelated_ref = make_ref()
+      send(pid, {unrelated_ref, {:data, "x"}})
+
+      refute_receive {^unrelated_ref, {:data, "x"}}
+
+      GenServer.stop(pid)
+    end
+  end
 
   describe "validate_command/2" do
     setup do
@@ -41,7 +138,7 @@ defmodule Yokai.TUITest do
       assert {:ok, :quit} = Yokai.TUI.validate_command("q", options)
 
       # Note: The 'w' command requires interactive input and can't be easily tested
-      # in a unit test without mocking Owl.IO.input, so we skip testing it here
+      # in a unit test without mocking termite input, so we skip testing it here
     end
 
     test "returns {:ok, {:run_once_with_opts, opts}} for valid 'a' command", %{options: options} do
@@ -61,87 +158,58 @@ defmodule Yokai.TUITest do
   end
 
   describe "build_menu_text/0" do
-    test "generates menu with all available commands" do
-      menu_list = Yokai.TUI.build_menu_text()
-
-      text_content =
-        menu_list
-        |> List.flatten()
-        |> Enum.map(fn
-          %Owl.Tag{data: data} -> data
-          item when is_binary(item) -> item
-          _ -> ""
-        end)
-        |> Enum.join("")
-
-      assert text_content =~ "Watching for changes..."
-      assert text_content =~ "Rerun tests"
-      assert text_content =~ "Quit"
+    defp menu_to_string(menu_data) do
+      menu_data
+      |> Owl.Data.to_chardata()
+      |> IO.iodata_to_binary()
     end
 
-    test "menu includes both commands in correct format" do
-      menu_list = Yokai.TUI.build_menu_text()
+    test "generates menu with all available commands" do
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
-      flattened = List.flatten(menu_list)
+      assert is_binary(menu_text)
+      assert menu_text =~ "Watching for changes..."
+      assert menu_text =~ "Rerun tests"
+      assert menu_text =~ "Quit"
+      assert menu_text =~ "Update the test files pattern"
+      assert menu_text =~ "Run all tests once"
+    end
 
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Watching for changes...")
-             end)
+    test "menu includes commands with correct keys formatted as bright" do
+      menu_data = Yokai.TUI.build_menu_text()
 
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Rerun tests")
-             end)
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && String.contains?(item, "Quit")
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "r"} -> true
-               _ -> false
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "q"} -> true
-               _ -> false
-             end)
-
-      assert Enum.any?(flattened, fn
-               %Owl.Tag{data: "w"} -> true
-               _ -> false
-             end)
+      assert Owl.Data.tag("r", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("q", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("w", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("a", :bright) in List.flatten(menu_data)
     end
 
     test "menu structure includes all required sections" do
-      menu_list = Yokai.TUI.build_menu_text()
-      flattened = List.flatten(menu_list)
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
-      assert Enum.at(flattened, 0) == "\nWatching for changes...\n\n"
-
-      assert Enum.any?(flattened, fn item ->
-               is_binary(item) && item == "Commands:\n"
-             end)
-
-      newline_count = Enum.count(flattened, fn item -> item == "\n" end)
-      assert newline_count > 0
+      assert String.starts_with?(menu_text, "\nWatching for changes...\n\n")
+      assert menu_text =~ "Commands:\n"
     end
 
-    test "returns a list structure" do
-      menu_list = Yokai.TUI.build_menu_text()
+    test "returns a string" do
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
-      assert is_list(menu_list)
-      assert length(menu_list) > 0
-
-      flattened = List.flatten(menu_list)
-      assert length(flattened) > 5
+      assert is_binary(menu_text)
+      assert String.length(menu_text) > 10
     end
-  end
 
-  describe "listen_new_command/1" do
-    test "returns a task" do
-      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
-      task = Yokai.TUI.listen_new_command(options)
-      assert %Task{} = task
+    test "menu format is human readable" do
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
+
+      lines = String.split(menu_text, "\n")
+      assert length(lines) >= 5
+
+      # Should contain header
+      assert Enum.any?(lines, &String.contains?(&1, "Watching for changes"))
+      assert Enum.any?(lines, &String.contains?(&1, "Commands:"))
+
+      # Should contain command descriptions
+      assert Enum.any?(lines, &String.contains?(&1, " - "))
     end
   end
 
@@ -174,7 +242,8 @@ defmodule Yokai.TUITest do
     end
 
     test "handles complex glob patterns", %{options: options} do
-      result = Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs", options)
+      result =
+        Yokai.TUI.format_test_pattern_update("test/{unit,integration}/**/*_test.exs", options)
 
       assert {:ok, {:run_with_opts, opts}} = result
       assert is_map(opts)

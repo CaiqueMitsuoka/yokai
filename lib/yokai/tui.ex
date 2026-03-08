@@ -1,4 +1,6 @@
 defmodule Yokai.TUI do
+  use GenServer
+
   alias Yokai.Options.CLIParser
 
   @commands %{
@@ -10,19 +12,56 @@ defmodule Yokai.TUI do
     "q" => {:quit, "Quit"}
   }
 
-  def listen_new_command(options) do
-    main_process = self()
-
-    Task.async(fn ->
-      command = listen_with_menu(options)
-      send(main_process, command)
-    end)
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def listen_with_menu(options) do
-    build_menu_text() |> Owl.IO.puts()
+  def subscribe(pid \\ self()) do
+    GenServer.call(__MODULE__, {:subscribe, pid})
+  end
 
-    Owl.IO.input(cast: &validate_command(&1, options))
+  def terminal do
+    GenServer.call(__MODULE__, :terminal)
+  end
+
+  @impl true
+  def init(opts) do
+    terminal = opts[:terminal] || Termite.Terminal.start()
+
+    {:ok, %{terminal: terminal, subscriber: nil}}
+  end
+
+  @impl true
+  def handle_call({:subscribe, pid}, _from, state) do
+    Process.monitor(pid)
+
+    {:reply, {:ok, state.terminal}, %{state | subscriber: pid}}
+  end
+
+  def handle_call(:terminal, _from, state) do
+    {:reply, state.terminal, state}
+  end
+
+  @impl true
+  def handle_info({ref, _} = msg, %{terminal: %{reader: reader}, subscriber: subscriber} = state)
+      when ref == reader and subscriber != nil do
+    send(subscriber, msg)
+
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _, :process, pid, _}, %{subscriber: pid} = state) do
+    state = Map.put(state, :subscriber, nil)
+
+    {:noreply, state}
+  end
+
+  def handle_info(_msg, state) do
+    {:noreply, state}
+  end
+
+  def show_menu do
+    build_menu_text() |> Owl.IO.puts()
   end
 
   def validate_command(input, options) do

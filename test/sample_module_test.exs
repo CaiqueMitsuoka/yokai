@@ -1,5 +1,5 @@
 defmodule SampleModuleTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest SampleModule
   alias SampleModule
 
