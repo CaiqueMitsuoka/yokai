@@ -158,8 +158,14 @@ defmodule Yokai.TUITest do
   end
 
   describe "build_menu_text/0" do
+    defp menu_to_string(menu_data) do
+      menu_data
+      |> Owl.Data.to_chardata()
+      |> IO.iodata_to_binary()
+    end
+
     test "generates menu with all available commands" do
-      menu_text = Yokai.TUI.build_menu_text()
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
       assert is_binary(menu_text)
       assert menu_text =~ "Watching for changes..."
@@ -169,31 +175,31 @@ defmodule Yokai.TUITest do
       assert menu_text =~ "Run all tests once"
     end
 
-    test "menu includes commands with correct keys" do
-      menu_text = Yokai.TUI.build_menu_text()
+    test "menu includes commands with correct keys formatted as bright" do
+      menu_data = Yokai.TUI.build_menu_text()
 
-      assert menu_text =~ "r - Rerun tests"
-      assert menu_text =~ "q - Quit"
-      assert menu_text =~ "w - Update the test files pattern"
-      assert menu_text =~ "a - Run all tests once"
+      assert Owl.Data.tag("r", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("q", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("w", :bright) in List.flatten(menu_data)
+      assert Owl.Data.tag("a", :bright) in List.flatten(menu_data)
     end
 
     test "menu structure includes all required sections" do
-      menu_text = Yokai.TUI.build_menu_text()
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
       assert String.starts_with?(menu_text, "\nWatching for changes...\n\n")
       assert menu_text =~ "Commands:\n"
     end
 
     test "returns a string" do
-      menu_text = Yokai.TUI.build_menu_text()
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
       assert is_binary(menu_text)
       assert String.length(menu_text) > 10
     end
 
     test "menu format is human readable" do
-      menu_text = Yokai.TUI.build_menu_text()
+      menu_text = Yokai.TUI.build_menu_text() |> menu_to_string()
 
       lines = String.split(menu_text, "\n")
       assert length(lines) >= 5

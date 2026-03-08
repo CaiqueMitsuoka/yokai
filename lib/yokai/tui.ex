@@ -61,7 +61,7 @@ defmodule Yokai.TUI do
   end
 
   def show_menu do
-    build_menu_text() |> puts()
+    build_menu_text() |> Owl.IO.puts()
   end
 
   def validate_command(input, options) do
@@ -83,13 +83,11 @@ defmodule Yokai.TUI do
   end
 
   defp update_command({:update_options, question, formatter} = command, options) do
-    IO.write("\n" <> question <> " ")
-    input = IO.gets("") |> String.trim()
-    IO.puts("")
+    input = Owl.IO.input(label: question)
 
     case formatter.(input, options) do
       {:error, msg} ->
-        puts(msg)
+        Owl.IO.inspect(msg)
         update_command(command, options)
 
       result ->
@@ -102,11 +100,19 @@ defmodule Yokai.TUI do
       @commands
       |> Enum.map(fn
         {key, {_command, description}} ->
-          "#{key} - #{description}"
+          [
+            Owl.Data.tag(key, :bright),
+            " - ",
+            description
+          ]
       end)
-      |> Enum.join("\n")
+      |> Enum.intersperse("\n")
 
-    "\nWatching for changes...\n\nCommands:\n#{commands}"
+    []
+    |> Kernel.++(["\nWatching for changes...\n\n"])
+    |> Kernel.++(["Commands:\n"])
+    |> Kernel.++(commands)
+    |> List.flatten()
   end
 
   def format_test_pattern_update(input, options) do
@@ -125,7 +131,7 @@ defmodule Yokai.TUI do
   end
 
   def puts(string) do
-    IO.puts(string)
+    Owl.IO.puts([string])
   end
 
   def clear do
