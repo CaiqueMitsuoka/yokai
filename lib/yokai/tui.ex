@@ -46,11 +46,14 @@ defmodule Yokai.TUI do
   def handle_info({ref, _} = msg, %{terminal: %{reader: reader}, subscriber: subscriber} = state)
       when ref == reader and subscriber != nil do
     send(subscriber, msg)
+
     {:noreply, state}
   end
 
   def handle_info({:DOWN, _, :process, pid, _}, %{subscriber: pid} = state) do
-    {:noreply, %{state | subscriber: nil}}
+    state = Map.put(state, :subscriber, nil)
+
+    {:noreply, state}
   end
 
   def handle_info(_msg, state) do

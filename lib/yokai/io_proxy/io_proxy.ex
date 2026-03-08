@@ -14,6 +14,16 @@ defmodule Yokai.IOProxy do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
+  def ensure_logger_wrapped do
+    case :logger.get_handler_config(:default) do
+      {:ok, %{formatter: {Yokai.IOProxy.LoggerFormatter, _}}} ->
+        :ok
+
+      _ ->
+        wrap_logger_formatter()
+    end
+  end
+
   def set_group_leader do
     proxy_pid = Process.whereis(__MODULE__)
     original_gl = Process.group_leader()
@@ -29,6 +39,7 @@ defmodule Yokai.IOProxy do
   def init(:ok) do
     original_gl = Process.group_leader()
     wrap_logger_formatter()
+    wrap_standard_error()
 
     {:ok, %{original_gl: original_gl}}
   end
@@ -50,6 +61,29 @@ defmodule Yokai.IOProxy do
     send(state.original_gl, other)
 
     {:noreply, state}
+  end
+
+  defp wrap_standard_error do
+    original_stderr = Process.whereis(:standard_error)
+
+    if original_stderr do
+      proxy = spawn_link(fn -> stderr_proxy_loop(original_stderr) end)
+      Process.unregister(:standard_error)
+      Process.register(proxy, :standard_error)
+    end
+  end
+
+  defp stderr_proxy_loop(original) do
+    receive do
+      {:io_request, from, reply_as, request} ->
+        translated = translate_request(request)
+        send(original, {:io_request, from, reply_as, translated})
+        stderr_proxy_loop(original)
+
+      other ->
+        send(original, other)
+        stderr_proxy_loop(original)
+    end
   end
 
   defp wrap_logger_formatter do

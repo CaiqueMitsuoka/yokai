@@ -57,8 +57,10 @@ defmodule Mix.Tasks.Watch do
 
     IOProxy.set_group_leader()
     ExUnit.start(auto_run: false)
+
     {:ok, terminal} = TUI.subscribe()
-    options = %{options | terminal: terminal}
+
+    options = Map.put(options, :terminal, terminal)
 
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)
