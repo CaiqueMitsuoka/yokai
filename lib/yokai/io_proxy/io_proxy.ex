@@ -1,4 +1,6 @@
 defmodule Yokai.IOProxy do
+  use GenServer
+
   @moduledoc """
   A transparent IO group leader proxy that translates `\\n` → `\\r\\n` in output.
 
@@ -8,14 +10,46 @@ defmodule Yokai.IOProxy do
   forwarding to the original group leader.
   """
 
-  def start do
-    original_gl = Process.group_leader()
-    pid = spawn_link(fn -> loop(original_gl) end)
-    Process.group_leader(self(), pid)
+  def start_link(_opts \\ []) do
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  end
 
+  def set_group_leader do
+    proxy_pid = Process.whereis(__MODULE__)
+    original_gl = Process.group_leader()
+
+    if original_gl != proxy_pid do
+      GenServer.call(__MODULE__, {:set_original_gl, original_gl})
+    end
+
+    Process.group_leader(self(), proxy_pid)
+  end
+
+  @impl true
+  def init(:ok) do
+    original_gl = Process.group_leader()
     wrap_logger_formatter()
 
-    :ok
+    {:ok, %{original_gl: original_gl}}
+  end
+
+  @impl true
+  def handle_call({:set_original_gl, gl}, _from, state) do
+    {:reply, :ok, %{state | original_gl: gl}}
+  end
+
+  @impl true
+  def handle_info({:io_request, from, reply_as, request}, state) do
+    translated = translate_request(request)
+    send(state.original_gl, {:io_request, from, reply_as, translated})
+
+    {:noreply, state}
+  end
+
+  def handle_info(other, state) do
+    send(state.original_gl, other)
+
+    {:noreply, state}
   end
 
   defp wrap_logger_formatter do
@@ -29,19 +63,6 @@ defmodule Yokai.IOProxy do
 
       _ ->
         :ok
-    end
-  end
-
-  defp loop(original_gl) do
-    receive do
-      {:io_request, from, reply_as, request} ->
-        translated = translate_request(request)
-        send(original_gl, {:io_request, from, reply_as, translated})
-        loop(original_gl)
-
-      other ->
-        send(original_gl, other)
-        loop(original_gl)
     end
   end
 

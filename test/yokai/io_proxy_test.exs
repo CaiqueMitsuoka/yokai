@@ -1,40 +1,60 @@
 defmodule Yokai.IOProxyTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
-  describe "start/0" do
-    test "sets a new group leader for the calling process" do
-      original_gl = Process.group_leader()
-
-      Yokai.IOProxy.start()
-      proxy_gl = Process.group_leader()
-
-      refute original_gl == proxy_gl
-      assert Process.alive?(proxy_gl)
-
-      Process.group_leader(self(), original_gl)
-      restore_logger_formatter()
+  describe "LoggerFormatter" do
+    test "translates newlines in formatted output" do
+      fake_formatter = {Yokai.IOProxyTest.Helpers.FakeFormatter, :unused}
+      result = Yokai.IOProxy.LoggerFormatter.format(%{msg: "test"}, fake_formatter)
+      assert result == "fake\r\noutput\r\n"
     end
 
-    test "returns :ok" do
-      original_gl = Process.group_leader()
-      assert :ok = Yokai.IOProxy.start()
-      Process.group_leader(self(), original_gl)
-      restore_logger_formatter()
+    test "is idempotent with existing \\r\\n" do
+      fake_formatter = {Yokai.IOProxyTest.Helpers.CRLFFormatter, :unused}
+      result = Yokai.IOProxy.LoggerFormatter.format(%{msg: "test"}, fake_formatter)
+      assert result == "already\r\ncorrect\r\n"
+    end
+  end
+end
+
+defmodule Yokai.IOProxySyncTest do
+  use ExUnit.Case
+
+  setup do
+    on_exit(&restore_logger_formatter/0)
+    :ok
+  end
+
+  describe "start_link/1" do
+    test "starts as a GenServer" do
+      {:ok, pid} = GenServer.start_link(Yokai.IOProxy, :ok)
+      assert Process.alive?(pid)
+      GenServer.stop(pid)
     end
 
     test "wraps the logger formatter" do
-      original_gl = Process.group_leader()
-
       {:ok, %{formatter: {orig_mod, _}}} = :logger.get_handler_config(:default)
 
-      Yokai.IOProxy.start()
+      {:ok, pid} = GenServer.start_link(Yokai.IOProxy, :ok)
 
       {:ok, %{formatter: {new_mod, {wrapped_mod, _}}}} = :logger.get_handler_config(:default)
       assert new_mod == Yokai.IOProxy.LoggerFormatter
       assert wrapped_mod == orig_mod
 
+      GenServer.stop(pid)
+    end
+  end
+
+  describe "set_group_leader/0" do
+    test "sets the IOProxy process as the caller's group leader" do
+      original_gl = Process.group_leader()
+
+      unless Process.whereis(Yokai.IOProxy), do: start_supervised!(Yokai.IOProxy)
+
+      pid = Process.whereis(Yokai.IOProxy)
+      Yokai.IOProxy.set_group_leader()
+      assert Process.group_leader() == pid
+
       Process.group_leader(self(), original_gl)
-      restore_logger_formatter()
     end
   end
 
@@ -115,27 +135,10 @@ defmodule Yokai.IOProxyTest do
     end
   end
 
-  describe "LoggerFormatter" do
-    test "translates newlines in formatted output" do
-      fake_formatter = {Yokai.IOProxyTest.Helpers.FakeFormatter, :unused}
-      result = Yokai.IOProxy.LoggerFormatter.format(%{msg: "test"}, fake_formatter)
-      assert result == "fake\r\noutput\r\n"
-    end
-
-    test "is idempotent with existing \\r\\n" do
-      fake_formatter = {Yokai.IOProxyTest.Helpers.CRLFFormatter, :unused}
-      result = Yokai.IOProxy.LoggerFormatter.format(%{msg: "test"}, fake_formatter)
-      assert result == "already\r\ncorrect\r\n"
-    end
-  end
-
-  # Sends a request through a real Yokai.IOProxy backed by a fake GL,
-  # returns {reply, forwarded_request}.
   defp send_through_proxy(request) do
     test_pid = self()
     original_gl = Process.group_leader()
 
-    # Fake GL that captures forwarded requests
     fake_gl =
       spawn(fn ->
         receive do
@@ -145,11 +148,9 @@ defmodule Yokai.IOProxyTest do
         end
       end)
 
-    # Set the fake GL as our group leader, then start the proxy on top of it
     Process.group_leader(self(), fake_gl)
-    Yokai.IOProxy.start()
+    {:ok, proxy} = GenServer.start_link(Yokai.IOProxy, :ok)
 
-    proxy = Process.group_leader()
     ref = make_ref()
     send(proxy, {:io_request, self(), ref, request})
 
@@ -165,6 +166,7 @@ defmodule Yokai.IOProxyTest do
         1000 -> raise "Timed out waiting for io_reply"
       end
 
+    GenServer.stop(proxy)
     Process.group_leader(self(), original_gl)
     restore_logger_formatter()
     result

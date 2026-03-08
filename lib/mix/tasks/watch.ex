@@ -42,6 +42,7 @@ defmodule Mix.Tasks.Watch do
 
   alias Yokai.Options.CLIParser
   alias Yokai.Initializer
+  alias Yokai.IOProxy
   alias Yokai.Runner
   alias Yokai.TUI
 
@@ -53,6 +54,11 @@ defmodule Mix.Tasks.Watch do
 
     load_configs()
     Yokai.Application.start(:app, options)
+
+    IOProxy.set_group_leader()
+    ExUnit.start(auto_run: false)
+    {:ok, terminal} = TUI.subscribe()
+    options = %{options | terminal: terminal}
 
     {:ok, pid} = FileSystem.start_link(dirs: options.watch_folders)
     FileSystem.subscribe(pid)

@@ -1,6 +1,103 @@
 defmodule Yokai.TUITest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import ExUnit.CaptureIO
+
+  defp fake_terminal do
+    ref = make_ref()
+    %{reader: ref, adapter: :fake}
+  end
+
+  defp start_tui(terminal) do
+    {:ok, pid} = GenServer.start_link(Yokai.TUI, terminal: terminal)
+    pid
+  end
+
+  describe "start_link/1" do
+    test "starts as a GenServer" do
+      terminal = fake_terminal()
+      {:ok, pid} = GenServer.start_link(Yokai.TUI, terminal: terminal)
+      assert Process.alive?(pid)
+      GenServer.stop(pid)
+    end
+  end
+
+  describe "subscribe/1" do
+    test "returns {:ok, terminal}" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      assert {:ok, ^terminal} = GenServer.call(pid, {:subscribe, self()})
+
+      GenServer.stop(pid)
+    end
+
+    test "returns terminal via :terminal call" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      assert ^terminal = GenServer.call(pid, :terminal)
+
+      GenServer.stop(pid)
+    end
+  end
+
+  describe "message forwarding" do
+    test "forwards terminal input to subscriber" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      GenServer.call(pid, {:subscribe, self()})
+      send(pid, {ref, {:data, "r"}})
+
+      assert_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "does not forward when no subscriber" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      send(pid, {ref, {:data, "r"}})
+
+      refute_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "cleans up subscriber on DOWN" do
+      terminal = fake_terminal()
+      ref = terminal.reader
+      pid = start_tui(terminal)
+
+      subscriber = spawn(fn -> Process.sleep(:infinity) end)
+      GenServer.call(pid, {:subscribe, subscriber})
+
+      Process.exit(subscriber, :kill)
+      Process.sleep(50)
+
+      send(pid, {ref, {:data, "r"}})
+      refute_receive {^ref, {:data, "r"}}
+
+      GenServer.stop(pid)
+    end
+
+    test "does not forward unrelated messages" do
+      terminal = fake_terminal()
+      pid = start_tui(terminal)
+
+      GenServer.call(pid, {:subscribe, self()})
+
+      unrelated_ref = make_ref()
+      send(pid, {unrelated_ref, {:data, "x"}})
+
+      refute_receive {^unrelated_ref, {:data, "x"}}
+
+      GenServer.stop(pid)
+    end
+  end
 
   describe "validate_command/2" do
     setup do
@@ -107,14 +204,6 @@ defmodule Yokai.TUITest do
 
       # Should contain command descriptions
       assert Enum.any?(lines, &String.contains?(&1, " - "))
-    end
-  end
-
-  describe "listen_new_command/1" do
-    test "returns a task" do
-      options = %{test_patterns: ["test/**/*_test.exs"], watch_folders: ["lib", "test"]}
-      task = Yokai.TUI.listen_new_command(options)
-      assert %Task{} = task
     end
   end
 

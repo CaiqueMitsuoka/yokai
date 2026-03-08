@@ -6,14 +6,11 @@ defmodule Yokai.Initializer do
   def run(opts) do
     with _ <- Mix.Task.run("loadconfig"),
          :ok <- Mix.Task.run("app.config"),
-         {:ok, terminal} <- TUI.start(),
          {:ok, [:file_system]} <- Application.ensure_all_started(:file_system),
-         {:ok, _} <- start_application(),
-         :ok <- ExUnit.start(auto_run: false) do
+         {:ok, _} <- start_application() do
       TUI.puts("Starting Yokai...")
 
       opts
-      |> struct!(terminal: terminal)
     else
       :error ->
         Logger.error("Error starting Yokai.")

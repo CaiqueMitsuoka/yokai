@@ -1,5 +1,5 @@
 defmodule Yokai.Options.CLIParserTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Yokai.Options.CLIParser
   alias Yokai.Options.CLIParser
   alias Yokai.Options

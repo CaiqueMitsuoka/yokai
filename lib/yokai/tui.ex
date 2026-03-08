@@ -1,6 +1,7 @@
 defmodule Yokai.TUI do
+  use GenServer
+
   alias Yokai.Options.CLIParser
-  alias Yokai.IOProxy
 
   @commands %{
     "w" =>
@@ -11,45 +12,53 @@ defmodule Yokai.TUI do
     "q" => {:quit, "Quit"}
   }
 
-  def start do
-    terminal = Termite.Terminal.start()
-    IOProxy.start()
-
-    {:ok, terminal}
+  def start_link(opts \\ []) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def listen_new_command(options) do
-    main_process = self()
+  def subscribe(pid \\ self()) do
+    GenServer.call(__MODULE__, {:subscribe, pid})
+  end
 
-    Task.async(fn ->
-      command = listen_with_menu(options)
-      send(main_process, command)
-    end)
+  def terminal do
+    GenServer.call(__MODULE__, :terminal)
+  end
+
+  @impl true
+  def init(opts) do
+    terminal = opts[:terminal] || Termite.Terminal.start()
+
+    {:ok, %{terminal: terminal, subscriber: nil}}
+  end
+
+  @impl true
+  def handle_call({:subscribe, pid}, _from, state) do
+    Process.monitor(pid)
+
+    {:reply, {:ok, state.terminal}, %{state | subscriber: pid}}
+  end
+
+  def handle_call(:terminal, _from, state) do
+    {:reply, state.terminal, state}
+  end
+
+  @impl true
+  def handle_info({ref, _} = msg, %{terminal: %{reader: reader}, subscriber: subscriber} = state)
+      when ref == reader and subscriber != nil do
+    send(subscriber, msg)
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _, :process, pid, _}, %{subscriber: pid} = state) do
+    {:noreply, %{state | subscriber: nil}}
+  end
+
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
   def show_menu do
     build_menu_text() |> puts()
-  end
-
-  def listen_with_menu(options) do
-    show_menu()
-
-    listen_for_keypress(options)
-  end
-
-  defp listen_for_keypress(options) do
-    case Termite.Terminal.poll(options.terminal) do
-      {:data, key} ->
-        key = String.trim(key)
-
-        case validate_command(key, options) do
-          {:ok, command} -> command
-          {:error, _msg} -> listen_for_keypress(options)
-        end
-
-      _ ->
-        listen_for_keypress(options)
-    end
   end
 
   def validate_command(input, options) do
