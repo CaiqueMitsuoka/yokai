@@ -29,6 +29,12 @@ defmodule Yokai.Initializer do
   end
 
   defp start_application do
+    # Stop Logger so it restarts with the project's config (e.g., level
+    # from config/test.exs). This mirrors what Mix.Tasks.App.Start does —
+    # without it, Logger keeps its boot-time defaults and ignores the
+    # project's configured level.
+    Logger.App.stop()
+
     Mix.Project.config()
     |> Keyword.get(:app)
     |> Application.ensure_all_started()
