@@ -68,8 +68,8 @@ Have a fast code reloader and a nice CLI to quick iterate on development.
 - [x] Hot reload test file before each run
 - [x] Accept test file patterns to select test e.g accept `test/*/sample*`
 - [x] Option to clear console between run
-- [ ] Keypress to trigger a run(Partially implemented, requires enter)
-- [ ] Keypress to run all tests(Partially implemented, requires enter)
-- [ ] Keypress to redefine the pattern(Partially implemented, requires enter)
+- [x] Keypress to trigger a run
+- [x] Keypress to run all tests
+- [x] Keypress to redefine the pattern
 - [ ] MCP server/tool for client to collect latest test run results.
 - [ ] MCP tool to redefine runned configuration
